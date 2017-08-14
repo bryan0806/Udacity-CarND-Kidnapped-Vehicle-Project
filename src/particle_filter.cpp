@@ -39,7 +39,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 
                     // TODO: Sample  and from these normal distrubtions like this:
                     // sample_x = dist_x(gen);
-                    // where "gen" is the random engine initialized earlier (line 18).
+                    // where "gen" is the random engine
                     sample_x = dist_x(gen);
                     sample_y = dist_y(gen);
                     sample_psi = dist_psi(gen);
@@ -53,8 +53,9 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
                     par_tmp.y = sample_y;
                     par_tmp.theta = sample_psi;
                     par_tmp.weight = 1.0/float(num_particles);
+                    weights.push_back(par_tmp.weight);
 
-                    cout << "x:" << par_tmp.x << " y:" << par_tmp.y << " weight:" << par_tmp.weight << endl;
+                    //cout << "x:" << par_tmp.x << " y:" << par_tmp.y << " weight:" << par_tmp.weight << endl;
 
                     particles.push_back(par_tmp);
             }
@@ -68,7 +69,37 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	// NOTE: When adding noise you may find std::normal_distribution and std::default_random_engine useful.
 	//  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
-
+    default_random_engine gen;
+    
+    for(int i=0;i<num_particles;i++){
+        double x_pre = particles[i].x;
+        double y_pre = particles[i].y;
+        double theta_pre = particles[i].theta;
+        
+        if (yaw_rate<0.0001) {
+            x_pre = x_pre+velocity*delta_t*cos(theta_pre);
+            y_pre = y_pre+velocity*delta_t*sin(theta_pre);
+        }else{
+            x_pre=x_pre+velocity*(sin(theta_pre+yaw_rate*delta_t)-sin(theta_pre))/yaw_rate;
+            y_pre=y_pre+velocity*(cos(theta_pre)-cos(theta_pre+yaw_rate*delta_t))/yaw_rate;
+            theta_pre=theta_pre+yaw_rate*delta_t;
+            
+        }
+        // This line creates a normal (Gaussian) distribution for x.
+        normal_distribution<double> dist_x(x_pre, std_pos[0]);
+        
+        // TODO: Create normal distributions for y and psi.
+        normal_distribution<double> dist_y(y_pre, std_pos[1]);
+        normal_distribution<double> dist_psi(theta_pre, std_pos[2]);
+        
+        particles[i].x = dist_x(gen);
+        particles[i].y = dist_y(gen);
+        particles[i].theta = dist_psi(gen);
+        
+        
+    }
+    
+    
 }
 
 void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::vector<LandmarkObs>& observations) {
