@@ -25,7 +25,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	// Add random Gaussian noise to each particle.
 	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
 
-        num_particles = 1000;
+        num_particles = 10;
         default_random_engine gen;
 
         // This line creates a normal (Gaussian) distribution for x.
@@ -123,7 +123,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	//   3.33
 	//   http://planning.cs.uiuc.edu/node99.html
 
-
+        /*  Print out for first explore the data information
         cout << "sensor range:" << sensor_range <<endl;
         cout << "size of std lanmark 1:" << sizeof(std_landmark[0]) << endl;
         for(int j=0;j<sizeof(std_landmark);j++){
@@ -138,9 +138,29 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
         }
 
         cout << "map landmark list size:" << map_landmarks.landmark_list.size() << endl;
+        */ // end explore the data /////////////////////
+
+        // Start to do the transformation
+        for(int i=0;i<num_particles;i++){
+            double x_pra = particles[i].x;
+            double y_pra = particles[i].y;
+            double theta_pra = particles[i].theta;
+
+            vector<LandmarkObs> trans_observation;
+            LandmarkObs obs;
+            for(int i=0;i<observations.size();i++){
+                    LandmarkObs trans_obs;
+                    obs = observations[i];
+
+                    trans_obs.x = x_pra+(obs.x*cos(theta_pra)-obs.y*sin(theta_pra));
+                    trans_obs.y = y_pra+(obs.x*sin(theta_pra)+obs.y*cos(theta_pra));
+                    trans_observation.push_back(trans_obs);
+
+                }
 
 
 
+        }
 
 
 }
