@@ -108,6 +108,7 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 	// NOTE: this method will NOT be called by the grading code. But you will probably find it useful to 
 	//   implement this method and use it as a helper during the updateWeights phase.
 
+        /* ////////////////// Parameters data explore
         for(int i=0;i<observations.size();i++){
             cout << "Test for see observations in dataAssociation function:" << endl;
             cout << "order:" << i << " id:" << observations[i].id << " x:" << observations[i].x << " y:" << observations[i].y << endl;
@@ -117,6 +118,24 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
         for(int j=0;j<predicted.size();j++){
             cout << "Test for see predicted vector in dataAssociation function:" << endl;
             cout << "order:" << j << " id:" << predicted[j].id << " x:" << predicted[j].x << " y:" << predicted[j].y << endl;
+        }
+        */ // finished exploration
+
+
+        for(int i=0;i<observations.size();i++){
+            double previous_dis = 100000.00;
+            for(int j=0;j<predicted.size();j++){
+
+                double distance = sqrt((observations[i].x-predicted[j].x)*(observations[i].x-predicted[j].x)+(observations[i].y-predicted[j].y)*(observations[i].y-predicted[j].y));
+                if(distance<previous_dis){
+                    observations[i].id = predicted[j].id;
+                }
+
+                previous_dis = distance;
+            }
+
+
+
         }
 
 
@@ -191,8 +210,74 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
             dataAssociation(predicted,trans_observation);
 
+            /* // for check data corect or not
+            for(int k=0;k<trans_observation.size();k++){
+
+                cout << "Test for see trans_ovservation :" << endl;
+                cout << "order:" << k << " id:" << trans_observation[k].id << " x:" << trans_observation[k].x << " y:" << trans_observation[k].y << endl;
+
+            }
+            */ // Finished checking data
+
+            // Updating the weight
+
+            double sig_x = std_landmark[0];
+            double sig_y = std_landmark[1];
+            vector<double> weights;
+            double final_weight=1.0;
+            double x_obs;
+            double y_obs;
+            double mu_x;
+            double mu_y;
+
+
+            for(int k=0;k<trans_observation.size();k++){
+
+                x_obs = trans_observation[k].x;
+                y_obs = trans_observation[k].y;
+
+                for(int i =0;i<predicted.size();i++){
+                    if(predicted[i].id==trans_observation[k].id){
+                        mu_x = predicted[i].x;
+                        mu_y = predicted[i].y;
+                    }
+
+
+
+                }
+
+
+            //cout << "sig x:" << sig_x << " sig_y:" << sig_y <<endl;
+            //cout << "x_obs:" << x_obs << " y_obs:" << y_obs << endl;
+            //cout << "mu_x:" << mu_x << " mu_y:" << mu_y << endl;
+
+            // calculate normalization term
+            double gauss_norm = (1/(2 * M_PI * sig_x * sig_y));
+
+            // calculate exponent
+            double exponent= (((x_obs - mu_x)*(x_obs - mu_x))/(2 * sig_x*sig_x)) + (((y_obs - mu_y)*(y_obs - mu_y))/(2 * sig_y*sig_y));
+
+            // calculate weight using normalization terms and exponent
+            double weight= gauss_norm * exp(-exponent);
+            //cout << "----weight----" << weight << endl;
+            if(weight > 0.0000001){
+              weights.push_back(weight);
+            }
+
+
+
+            }
+
+            for(int j=0;j<weights.size();j++){
+                final_weight = final_weight*weights[j];
+            }
+
+            cout << "weight size" << weights.size() << "final weight:" << final_weight << endl;
+            particles[i].weight=final_weight;
+
 
         }
+
 
 
 }
@@ -201,6 +286,28 @@ void ParticleFilter::resample() {
 	// TODO: Resample particles with replacement with probability proportional to their weight. 
 	// NOTE: You may find std::discrete_distribution helpful here.
 	//   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
+
+    // Set of current particles
+    default_random_engine gen;
+    std::vector<Particle> particles_resample;
+
+    //collect all weights
+    vector<double> weights;
+    for(int i=0;i<num_particles;i++){
+        weights.push_back(particles[i].weight);
+    }
+
+    random_device rd;
+    discrete_distribution<> d(weights.begin(),weights.end());
+    //map<int, int> m;
+    for(int n=0;n<num_particles;++n){
+        Particle particle_res = particles[d(gen)];
+        particles_resample.push_back(particle_res);
+    }
+
+    particles = particles_resample;
+
+
 
 }
 
