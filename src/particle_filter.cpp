@@ -304,6 +304,8 @@ void ParticleFilter::resample() {
 
     }
 
+    cout << " max weight is " << max_weight << endl;
+
     double beta = 0.0;
 
     //generate random number from a range: https://stackoverflow.com/questions/5008804/generating-random-integer-from-a-range
@@ -312,13 +314,16 @@ void ParticleFilter::resample() {
     uniform_int_distribution<int> d(0,num_particles-1);
     auto ran_idx = d(rng);
     cout <<  "ranom index:" << ran_idx << endl;
+
     for(int j=0;j<num_particles;j++){
         beta = beta + 2*max_weight;
-
+        cout << "beta: " << beta << endl;
         while(weights[ran_idx] < beta){
             beta = beta - weights[ran_idx];
             ran_idx = (ran_idx+1)%num_particles;
         }
+        cout << "after while beta is " << beta << "then weight[ran_idx] is " << weights[ran_idx] << endl;
+        cout << "after while ran_idx :" << ran_idx << endl;
 
         particles_resample.push_back(particles[ran_idx]);
         new_weights.push_back(weights[ran_idx]);
