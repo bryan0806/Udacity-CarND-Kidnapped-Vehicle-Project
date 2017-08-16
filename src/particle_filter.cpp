@@ -108,6 +108,18 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 	// NOTE: this method will NOT be called by the grading code. But you will probably find it useful to 
 	//   implement this method and use it as a helper during the updateWeights phase.
 
+        for(int i=0;i<observations.size();i++){
+            cout << "Test for see observations in dataAssociation function:" << endl;
+            cout << "order:" << i << " id:" << observations[i].id << " x:" << observations[i].x << " y:" << observations[i].y << endl;
+
+        }
+
+        for(int j=0;j<predicted.size();j++){
+            cout << "Test for see predicted vector in dataAssociation function:" << endl;
+            cout << "order:" << j << " id:" << predicted[j].id << " x:" << predicted[j].x << " y:" << predicted[j].y << endl;
+        }
+
+
 }
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[], 
@@ -123,7 +135,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	//   3.33
 	//   http://planning.cs.uiuc.edu/node99.html
 
-        /*  Print out for first explore the data information
+        /* /////// Print out for first explore the data information
         cout << "sensor range:" << sensor_range <<endl;
         cout << "size of std lanmark 1:" << sizeof(std_landmark[0]) << endl;
         for(int j=0;j<sizeof(std_landmark);j++){
@@ -158,6 +170,26 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
                 }
 
+            // prepare for using dataAssociation functinon
+
+            vector<LandmarkObs> predicted;
+            for(int i=0;i<map_landmarks.landmark_list.size();i++){
+                double x_l = map_landmarks.landmark_list[i].x_f;
+                double y_l = map_landmarks.landmark_list[i].y_f;
+                double distance = sqrt((x_pra-x_l)*(x_pra-x_l)+(y_pra-y_l)*(y_pra-y_l));
+                if(distance<sensor_range){
+                    LandmarkObs tmp;
+                    tmp.id = map_landmarks.landmark_list[i].id_i;
+                    tmp.x = x_l;
+                    tmp.y = y_l;
+
+                    predicted.push_back(tmp);
+                }
+
+
+            }
+
+            dataAssociation(predicted,trans_observation);
 
 
         }
