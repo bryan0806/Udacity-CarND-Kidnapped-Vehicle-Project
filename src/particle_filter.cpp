@@ -25,7 +25,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	// Add random Gaussian noise to each particle.
 	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
 
-        num_particles = 10;
+        num_particles = 20;
         default_random_engine gen;
 
         // This line creates a normal (Gaussian) distribution for x.
@@ -223,7 +223,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
             double sig_x = std_landmark[0];
             double sig_y = std_landmark[1];
-            vector<double> weights;
+            vector<double> weights_tmp;
             double final_weight=1.0;
             double x_obs;
             double y_obs;
@@ -261,20 +261,20 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
             double weight= gauss_norm * exp(-exponent);
             //cout << "----weight----" << weight << endl;
             if(weight > 0.0000001){
-              weights.push_back(weight);
+              weights_tmp.push_back(weight);
             }
 
 
 
             }
 
-            for(int j=0;j<weights.size();j++){
-                final_weight = final_weight*weights[j];
+            for(int j=0;j<weights_tmp.size();j++){
+                final_weight = final_weight*weights_tmp[j];
             }
 
-            cout << "weight size" << weights.size() << "final weight:" << final_weight << endl;
+            cout << "weight_tmp size" << weights_tmp.size() << "final weight:" << final_weight << endl;
             particles[i].weight=final_weight;
-
+            weights.push_back(final_weight);
 
         }
 
@@ -290,22 +290,46 @@ void ParticleFilter::resample() {
     // Set of current particles
     default_random_engine gen;
     std::vector<Particle> particles_resample;
+    std::vector<double> new_weights;
 
-    //collect all weights
-    vector<double> weights;
-    for(int i=0;i<num_particles;i++){
-        weights.push_back(particles[i].weight);
+    //find max weight
+    double max_weight=0.0;
+    double sum_weights=0.0;
+    for(int i=0;i<weights.size();i++){
+        if(weights[i]>max_weight){
+            max_weight=weights[i];
+        }
+
+        //sum_weights = sum_weights+weights[i];
+
     }
 
+    double beta = 0.0;
+
+    //generate random number from a range: https://stackoverflow.com/questions/5008804/generating-random-integer-from-a-range
     random_device rd;
-    discrete_distribution<> d(weights.begin(),weights.end());
-    //map<int, int> m;
-    for(int n=0;n<num_particles;++n){
-        Particle particle_res = particles[d(gen)];
-        particles_resample.push_back(particle_res);
+    mt19937 rng(rd());
+    uniform_int_distribution<int> d(0,num_particles-1);
+    auto ran_idx = d(rng);
+    cout <<  "ranom index:" << ran_idx << endl;
+    for(int j=0;j<num_particles;j++){
+        beta = beta + 2*max_weight;
+
+        while(weights[ran_idx] < beta){
+            beta = beta - weights[ran_idx];
+            ran_idx = (ran_idx+1)%num_particles;
+        }
+
+        particles_resample.push_back(particles[ran_idx]);
+        new_weights.push_back(weights[ran_idx]);
+
     }
+
+
+
 
     particles = particles_resample;
+    weights = new_weights;
 
 
 
