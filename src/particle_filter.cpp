@@ -331,6 +331,12 @@ void ParticleFilter::resample() {
     particles = particles_resample;
     weights = new_weights;
 
+    cout << "particles post update:\n";
+            for (int i = 0; i < num_particles; i++) {
+                    cout << "particle " << i << ":\n";
+                    cout << "x: " << particles[i].x << ", y: " << particles[i].y << ", th: " << particles[i].theta << "w: " << particles[i].weight << endl;
+                    cout << "weight " << i << ": " << weights[i] << "\n";
+    }
 
 
 }
