@@ -25,7 +25,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	// Add random Gaussian noise to each particle.
 	// NOTE: Consult particle_filter.h for more information about this method (and others in this file).
 
-        num_particles = 20;
+        num_particles = 10;
         default_random_engine gen;
 
         // This line creates a normal (Gaussian) distribution for x.
@@ -55,7 +55,8 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
                     par_tmp.weight = 1.0/float(num_particles);
                     weights.push_back(par_tmp.weight);
 
-                    //cout << "x:" << par_tmp.x << " y:" << par_tmp.y << " weight:" << par_tmp.weight << endl;
+                    cout << "----initial position----"<<endl;
+                    cout << "x:" << par_tmp.x << " y:" << par_tmp.y << " weight:" << par_tmp.weight << endl;
 
                     particles.push_back(par_tmp);
             }
@@ -76,12 +77,12 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
         double y_pre = particles[i].y;
         double theta_pre = particles[i].theta;
         
-        if (yaw_rate<0.0001) {
+        if (yaw_rate==0) {
             x_pre = x_pre+velocity*delta_t*cos(theta_pre);
             y_pre = y_pre+velocity*delta_t*sin(theta_pre);
         }else{
-            x_pre=x_pre+velocity*(sin(theta_pre+yaw_rate*delta_t)-sin(theta_pre))/yaw_rate;
-            y_pre=y_pre+velocity*(cos(theta_pre)-cos(theta_pre+yaw_rate*delta_t))/yaw_rate;
+            x_pre=x_pre+(velocity*(sin(theta_pre+yaw_rate*delta_t)-sin(theta_pre))/yaw_rate);
+            y_pre=y_pre+(velocity*(cos(theta_pre)-cos(theta_pre+yaw_rate*delta_t))/yaw_rate);
             theta_pre=theta_pre+yaw_rate*delta_t;
             
         }
@@ -96,6 +97,8 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
         particles[i].y = dist_y(gen);
         particles[i].theta = dist_psi(gen);
         
+        cout << "-------prediction------" << endl;
+        cout << "predict x: " << particles[i].x << " y: " << particles[i].y << " heading: " << particles[i].theta << endl;
         
     }
     
@@ -127,11 +130,14 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
             for(int j=0;j<predicted.size();j++){
 
                 double distance = sqrt((observations[i].x-predicted[j].x)*(observations[i].x-predicted[j].x)+(observations[i].y-predicted[j].y)*(observations[i].y-predicted[j].y));
+                cout << "-------check distance from map and TransObservation-------" << endl;
+                cout << "predict id: " << j << " distance: " << distance << "map x: "<< predicted[j].x << " y:" << predicted[j].y << endl;
                 if(distance<previous_dis){
                     observations[i].id = predicted[j].id;
+                    previous_dis = distance;    // main bug is here, after put inside if now the error is small
                 }
 
-                previous_dis = distance;
+
             }
 
 
@@ -183,8 +189,14 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
                     LandmarkObs trans_obs;
                     obs = observations[i];
 
+                    cout << "----------obs tranformation-------" << endl;
+                    cout << "Obs (x,y)(" << obs.x << "," << obs.y << ")-->" ;
+
                     trans_obs.x = x_pra+(obs.x*cos(theta_pra)-obs.y*sin(theta_pra));
                     trans_obs.y = y_pra+(obs.x*sin(theta_pra)+obs.y*cos(theta_pra));
+
+                    cout << "TObs (x,y)(" << trans_obs.x << "," << trans_obs.y << ")" <<endl;
+
                     trans_observation.push_back(trans_obs);
 
                 }
@@ -230,16 +242,19 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
             double mu_x;
             double mu_y;
 
+            cout << "-----------Association--------" << endl;
 
             for(int k=0;k<trans_observation.size();k++){
 
                 x_obs = trans_observation[k].x;
                 y_obs = trans_observation[k].y;
+                cout << "Landmark id: " << trans_observation[k].id << " TObs (x,y)(" << trans_observation[k].x << "," << trans_observation[k].y << ");";
 
                 for(int i =0;i<predicted.size();i++){
                     if(predicted[i].id==trans_observation[k].id){
                         mu_x = predicted[i].x;
                         mu_y = predicted[i].y;
+                        cout << "Predicted(Map)(x,y)(" << predicted[i].x << "," << predicted[i].y << ");" << endl;
                     }
 
 
@@ -260,9 +275,9 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
             // calculate weight using normalization terms and exponent
             double weight= gauss_norm * exp(-exponent);
             //cout << "----weight----" << weight << endl;
-            if(weight > 0.0000001){
-              weights_tmp.push_back(weight);
-            }
+            //if(weight > 0.0000001){
+            weights_tmp.push_back(weight);
+            //}
 
 
 
@@ -274,7 +289,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
             cout << "weight_tmp size" << weights_tmp.size() << "final weight:" << final_weight << endl;
             particles[i].weight=final_weight;
-            weights.push_back(final_weight);
+            weights[i]=final_weight;
 
         }
 
@@ -322,7 +337,7 @@ void ParticleFilter::resample() {
             beta = beta - weights[ran_idx];
             ran_idx = (ran_idx+1)%num_particles;
         }
-        cout << "after while beta is " << beta << "then weight[ran_idx] is " << weights[ran_idx] << endl;
+        cout << "after while beta is " << beta << " then weight[ran_idx] is " << weights[ran_idx] << endl;
         cout << "after while ran_idx :" << ran_idx << endl;
 
         particles_resample.push_back(particles[ran_idx]);
