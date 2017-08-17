@@ -55,8 +55,8 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
                     par_tmp.weight = 1.0/float(num_particles);
                     weights.push_back(par_tmp.weight);
 
-                    cout << "----initial position----"<<endl;
-                    cout << "x:" << par_tmp.x << " y:" << par_tmp.y << " weight:" << par_tmp.weight << endl;
+                    //cout << "----initial position----"<<endl;
+                    //cout << "x:" << par_tmp.x << " y:" << par_tmp.y << " weight:" << par_tmp.weight << endl;
 
                     particles.push_back(par_tmp);
             }
@@ -97,8 +97,8 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
         particles[i].y = dist_y(gen);
         particles[i].theta = dist_psi(gen);
         
-        cout << "-------prediction------" << endl;
-        cout << "predict x: " << particles[i].x << " y: " << particles[i].y << " heading: " << particles[i].theta << endl;
+        //cout << "-------prediction------" << endl;
+        //cout << "predict x: " << particles[i].x << " y: " << particles[i].y << " heading: " << particles[i].theta << endl;
         
     }
     
@@ -130,8 +130,8 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
             for(int j=0;j<predicted.size();j++){
 
                 double distance = sqrt((observations[i].x-predicted[j].x)*(observations[i].x-predicted[j].x)+(observations[i].y-predicted[j].y)*(observations[i].y-predicted[j].y));
-                cout << "-------check distance from map and TransObservation-------" << endl;
-                cout << "predict id: " << j << " distance: " << distance << "map x: "<< predicted[j].x << " y:" << predicted[j].y << endl;
+                //cout << "-------check distance from map and TransObservation-------" << endl;
+                //cout << "predict id: " << j << " distance: " << distance << "map x: "<< predicted[j].x << " y:" << predicted[j].y << endl;
                 if(distance<previous_dis){
                     observations[i].id = predicted[j].id;
                     previous_dis = distance;    // main bug is here, after put inside if now the error is small
@@ -189,13 +189,13 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
                     LandmarkObs trans_obs;
                     obs = observations[i];
 
-                    cout << "----------obs tranformation-------" << endl;
-                    cout << "Obs (x,y)(" << obs.x << "," << obs.y << ")-->" ;
+                    //cout << "----------obs tranformation-------" << endl;
+                    //cout << "Obs (x,y)(" << obs.x << "," << obs.y << ")-->" ;
 
                     trans_obs.x = x_pra+(obs.x*cos(theta_pra)-obs.y*sin(theta_pra));
                     trans_obs.y = y_pra+(obs.x*sin(theta_pra)+obs.y*cos(theta_pra));
 
-                    cout << "TObs (x,y)(" << trans_obs.x << "," << trans_obs.y << ")" <<endl;
+                    //cout << "TObs (x,y)(" << trans_obs.x << "," << trans_obs.y << ")" <<endl;
 
                     trans_observation.push_back(trans_obs);
 
@@ -242,19 +242,19 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
             double mu_x;
             double mu_y;
 
-            cout << "-----------Association--------" << endl;
+            //cout << "-----------Association--------" << endl;
 
             for(int k=0;k<trans_observation.size();k++){
 
                 x_obs = trans_observation[k].x;
                 y_obs = trans_observation[k].y;
-                cout << "Landmark id: " << trans_observation[k].id << " TObs (x,y)(" << trans_observation[k].x << "," << trans_observation[k].y << ");";
+                //cout << "Landmark id: " << trans_observation[k].id << " TObs (x,y)(" << trans_observation[k].x << "," << trans_observation[k].y << ");";
 
                 for(int i =0;i<predicted.size();i++){
                     if(predicted[i].id==trans_observation[k].id){
                         mu_x = predicted[i].x;
                         mu_y = predicted[i].y;
-                        cout << "Predicted(Map)(x,y)(" << predicted[i].x << "," << predicted[i].y << ");" << endl;
+                        //cout << "Predicted(Map)(x,y)(" << predicted[i].x << "," << predicted[i].y << ");" << endl;
                     }
 
 
@@ -287,7 +287,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
                 final_weight = final_weight*weights_tmp[j];
             }
 
-            cout << "weight_tmp size" << weights_tmp.size() << "final weight:" << final_weight << endl;
+            //cout << "weight_tmp size" << weights_tmp.size() << "final weight:" << final_weight << endl;
             particles[i].weight=final_weight;
             weights[i]=final_weight;
 
@@ -319,7 +319,7 @@ void ParticleFilter::resample() {
 
     }
 
-    cout << " max weight is " << max_weight << endl;
+    //cout << " max weight is " << max_weight << endl;
 
     double beta = 0.0;
 
@@ -328,17 +328,17 @@ void ParticleFilter::resample() {
     mt19937 rng(rd());
     uniform_int_distribution<int> d(0,num_particles-1);
     auto ran_idx = d(rng);
-    cout <<  "ranom index:" << ran_idx << endl;
+    //cout <<  "ranom index:" << ran_idx << endl;
 
     for(int j=0;j<num_particles;j++){
         beta = beta + 2*max_weight;
-        cout << "beta: " << beta << endl;
+        //cout << "beta: " << beta << endl;
         while(weights[ran_idx] < beta){
             beta = beta - weights[ran_idx];
             ran_idx = (ran_idx+1)%num_particles;
         }
-        cout << "after while beta is " << beta << " then weight[ran_idx] is " << weights[ran_idx] << endl;
-        cout << "after while ran_idx :" << ran_idx << endl;
+        //cout << "after while beta is " << beta << " then weight[ran_idx] is " << weights[ran_idx] << endl;
+        //cout << "after while ran_idx :" << ran_idx << endl;
 
         particles_resample.push_back(particles[ran_idx]);
         new_weights.push_back(weights[ran_idx]);
@@ -351,12 +351,12 @@ void ParticleFilter::resample() {
     particles = particles_resample;
     weights = new_weights;
 
-    cout << "particles post update:\n";
+   /* cout << "particles post update:\n";
             for (int i = 0; i < num_particles; i++) {
                     cout << "particle " << i << ":\n";
                     cout << "x: " << particles[i].x << ", y: " << particles[i].y << ", th: " << particles[i].theta << "w: " << particles[i].weight << endl;
                     cout << "weight " << i << ": " << weights[i] << "\n";
-    }
+    }*/
 
 
 }
